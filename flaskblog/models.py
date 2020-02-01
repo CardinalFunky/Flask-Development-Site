@@ -2,6 +2,7 @@ from datetime import datetime
 from flaskblog import db, login_manager
 from flask_login import UserMixin
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -34,3 +35,28 @@ class Post(db.Model):
 
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"
+
+
+# <Summary>
+#   The Video Game database model.
+# </Summary>
+class VideoGame(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        return f"VideoGame('{self.title}')"
+
+
+# <Summary>
+#   Video Game: Open World Game: the Open World Game
+#   A database model for this video game's jorunal entries.
+# </Summary>
+class OpenWorldGameTOWGJournal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(100), nullable=False)
+    entry_title = db.Column(db.String(100), nullable=False)
+    entry_description = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        return f"OpenWorldGameTOWGJournal('{self.category}', '{self.entry_title}')"
