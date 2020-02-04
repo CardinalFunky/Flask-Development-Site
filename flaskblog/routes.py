@@ -2,17 +2,18 @@ import os
 import secrets
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
-from flaskblog import app, db, bcrypt
+from flaskblog import app, db, bcrypt, login_manager
 from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, VideoGameForm
-from flaskblog.models import User, Post, VideoGame
 from flask_login import login_user, current_user, logout_user, login_required
+from flaskblog.models import User
+from bson.objectid import ObjectId
 
 
 @app.route('/')
 @app.route('/home')
 def home():
     page = request.args.get('page', 1, type=int)
-    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
+    posts = db.get_collection("posts").find()
     return render_template('home.html', posts=posts)
 
 
@@ -28,9 +29,8 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(user)
-        db.session.commit()
+        userDict = { "username": form.username.data, "email": form.email.data, "password": hashed_password }
+        db.get_collection("users").insert_one(userDict)
         flash('Your account has been created! You are now able to log in.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
@@ -42,14 +42,21 @@ def login():
         return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
-            user = User.query.filter_by(username=form.username.data).first()
-            if user and bcrypt.check_password_hash(user.password, form.password.data):
-                login_user(user, remember=form.remember.data)
+            user = db.get_collection("users").find_one({ "username": form.username.data })
+            if user and bcrypt.check_password_hash(user['password'], form.password.data):
+                login_user(User(user), remember=form.remember.data)
                 next_page = request.args.get('next')
                 return  redirect(next_page) if next_page else redirect(url_for('home'))
             else:
                 flash('Login Unsuccessful. Please check username and password.', 'danger')
     return render_template('login.html', title='Login', form=form)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    users = db.users
+    user = users.find_one(ObjectId(user_id))
+    return User(user)
 
 
 @app.route('/logout')
@@ -89,16 +96,28 @@ def account():
     if form.validate_on_submit():
         if form.picture.data:
             picture_file = save_picture(form.picture.data)
-            current_user.image_file = picture_file
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
+            db.users.update_one({"_id": current_user.user['_id']}, 
+                                        {"$set": {
+                                            "image_file": picture_file
+                                            }
+                                        })
+        db.users.update_one({"_id": current_user.user['_id']}, 
+                                            {"$set": {
+                                                "username": form.username.data,
+                                                "email": form.email.data
+                                                }
+                                            })
         flash('Your account has been updated!', 'success')
         return redirect(url_for('account'))
     elif request.method == 'GET':   
-        form.username.data = current_user.username
-        form.email.data = current_user.email
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+        form.username.data = current_user.user['username']
+        form.email.data = current_user.user['email']
+
+    if 'image_file' in current_user.user:
+        image_file = url_for('static', filename='profile_pics/' + current_user.user['image_file'])
+    else:
+        image_file = url_for('static', filename='profile_pics/default.jpg')
+
     return render_template('account.html', title='Account', image_file=image_file, form=form)
 
 
