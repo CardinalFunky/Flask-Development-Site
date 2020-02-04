@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"flaskblog.users"}],"uuid":"c9dbd0cf730c4502be039bd5aea2bea8"}

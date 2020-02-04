@@ -1,62 +1,23 @@
-from datetime import datetime
-from flaskblog import db, login_manager
 from flask_login import UserMixin
 
+class User(UserMixin):
+    def __init__(self, user):
+        self.user = user
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+    @staticmethod
+    def is_authenticated(self):
+        return True
 
+    @staticmethod
+    def is_active(self):
+        return True
 
-# <Summary>
-#   The User database model.
-# </Summary>
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
-    password = db.Column(db.String(60), nullable=False)
-    posts = db.relationship('Post', backref='author', lazy=True)
-    
-    def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.image_file}')"
+    @staticmethod
+    def is_anonymous(self):
+        return False
 
-
-# <Summary>
-#   The Post database model.
-# </Summary>
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    content = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    def __repr__(self):
-        return f"Post('{self.title}', '{self.date_posted}')"
-
-
-# <Summary>
-#   The Video Game database model.
-# </Summary>
-class VideoGame(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-
-    def __repr__(self):
-        return f"VideoGame('{self.title}')"
-
-
-# <Summary>
-#   Video Game: Open World Game: the Open World Game
-#   A database model for this video game's jorunal entries.
-# </Summary>
-class OpenWorldGameTOWGJournal(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(100), nullable=False)
-    entry_title = db.Column(db.String(100), nullable=False)
-    entry_description = db.Column(db.Text, nullable=False)
-
-    def __repr__(self):
-        return f"OpenWorldGameTOWGJournal('{self.category}', '{self.entry_title}')"
+    # Overriding get_id is required if you don't have the id property
+    # Check the source code for UserMixin for details
+    def get_id(self):
+        object_id = self.user.get('_id')
+        return str(object_id)

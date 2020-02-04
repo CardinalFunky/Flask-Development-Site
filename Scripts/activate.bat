@@ -1,6 +1,6 @@
 @echo off
 
-set "VIRTUAL_ENV=H:\Projects\Python\COCUP\venv_1"
+set "VIRTUAL_ENV=H:\Projects\Python\cocup\venv_1"
 
 if defined _OLD_VIRTUAL_PROMPT (
     set "PROMPT=%_OLD_VIRTUAL_PROMPT%"

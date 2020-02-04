@@ -28,7 +28,7 @@ def _deactivate(args):
 _deactivate(["nondestructive"])
 aliases["deactivate"] = _deactivate
 
-$VIRTUAL_ENV = r"H:\Projects\Python\COCUP\venv_1"
+$VIRTUAL_ENV = r"H:\Projects\Python\cocup\venv_1"
 
 $_OLD_VIRTUAL_PATH = $PATH
 $PATH = $PATH[:]
